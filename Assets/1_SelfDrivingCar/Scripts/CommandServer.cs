@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SocketIO;
 using UnityStandardAssets.Vehicles.Car;
 using System;
+using UnityEngine.SceneManagement;
 
 public class CommandServer : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class CommandServer : MonoBehaviour
 	{
 		_socket = GameObject.Find("SocketIO").GetComponent<SocketIOComponent>();
 		_socket.On("open", OnOpen);
+		_socket.On ("reset", OnReset);
 		_socket.On("steer", OnSteer);
 		_socket.On("manual", onManual);
 		_carController = CarRemoteControl.GetComponent<CarController>();
@@ -41,12 +43,20 @@ public class CommandServer : MonoBehaviour
 		EmitTelemetry (obj);
 	}
 
+	void OnReset(SocketIOEvent obj)
+	{
+		SceneManager.LoadScene("LakeTrackAutonomous");
+		EmitTelemetry (obj);
+	}
+
 	void OnSteer(SocketIOEvent obj)
 	{
         Debug.Log("Steering data event ...");
 		JSONObject jsonObject = obj.data;
 		CarRemoteControl.SteeringAngle = float.Parse(jsonObject.GetField("steering_angle").ToString());
 		CarRemoteControl.Acceleration = float.Parse(jsonObject.GetField("throttle").ToString());
+		var steering_bias = 1.0f * Mathf.Deg2Rad;
+		CarRemoteControl.SteeringAngle += steering_bias;
 		EmitTelemetry(obj);
 	}
 
